@@ -15,7 +15,8 @@ TOOL_VERSION="2.1"
 ## Feedback: pbowden@microsoft.com
 
 # Constants
-REGISTRYPATH="$HOME/Library/Group Containers/UBF8T346G9.Office/MicrosoftRegistrationDB.reg"
+USER=$( whoami )
+REGISTRYPATH="/Users/$USER/Library/Group Containers/UBF8T346G9.Office"
 REGISTRY="$REGISTRYPATH/MicrosoftRegistrationDB.reg"
 OUTLOOKPATH="/Applications/Microsoft Outlook.app"
 SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
@@ -24,19 +25,24 @@ function ShowUsage {
 # Shows tool usage and parameters
 	echo $TOOL_NAME - $TOOL_VERSION
 	echo "Purpose: Sets the default compose and reply/forward fonts in Outlook 365/2021/2019/2016 for Mac"
-	echo "Usage: OutlookFontPoke [-dump] <font-name> <font-size> <font-color> <registry-path>"
+	echo "Usage: OutlookFontPoke [-dump] <font-name> <font-size> <font-color> [<user>]"
 	echo "Example: OutlookFontPoke 'Helvetica' '11.0pt' 'gray'"
-	echo "Example: OutlookFontPoke 'Helvetica' '11.0pt' 'gray' '\$HOME/Library/Group Containers/UBF8T346G9.Office'"
+	echo "Example: OutlookFontPoke 'Helvetica' '11.0pt' 'gray' 'aUser'"
 	echo
 	exit 0
 }
 
 function CheckRegistryExists {
 # Check if Registry exists
+	if [ ! -e "$REGISTRYPATH" ]; then
+		echo "WARNING: Registry path DOES NOT exist at $REGISTRYPATH. Attempting to create..."
+		mkdir -p "$REGISTRYPATH"
+		chown $USER "$REGISTRYPATH"
+	fi
 	if [ ! -e "$REGISTRY" ]; then
 		echo "WARNING: Registry DOES NOT exist at path $REGISTRY. Attempting to create..."
-		mkdir -p "$REGISTRYPATH"
 		cp "$SCRIPTPATH/TemplateRegDB.reg" "$REGISTRY"
+		chown $USER "$REGISTRYPATH"
 		if [ "$?" != "0" ]; then
 			echo "ERROR: Registry could not be created."
 			exit 1
@@ -127,13 +133,15 @@ else
 	FONTNAME="$1"
 	FONTSIZE="$2"
 	FONTCOLOR="$3"
-	REGPATH="$4"
+	DOUSER="$4"
 	
 	if [ "$FONTCOLOR" == '' ]; then
 		FONTCOLOR="windowtext"
 	fi
-	if [ "$REGPATH" != '' ]; then
-		REGISTRYPATH=$REGPATH
+	
+	if [ "$DOUSER" != '' ]; then
+		USER=$DOUSER
+		REGISTRYPATH="/Users/$USER/Library/Group Containers/UBF8T346G9.Office"
 		REGISTRY="$REGISTRYPATH/MicrosoftRegistrationDB.reg"
 	fi
 fi
